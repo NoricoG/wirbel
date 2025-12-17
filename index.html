@@ -25,18 +25,24 @@
             <p>to</p>
             <input type="number" id="patternLengthUpper" min="2" value="8" />
         </div>
-        <button onClick="patternGenerate()">Generate new pattern</button>
+        <button id="generate-button" onClick="patternGenerate()">🎲 Generate new pattern</button>
     </div>
+    <h2>Current pattern</h2>
+    <p id="chosenSounds">Chosen sounds: </p>
     <div id="repl-container">
         <strudel-editor id="repl">
-            <!-- // Press the button Generate new pattern -->
+            <!-- // Press the button 🎲 Generate new pattern -->
         </strudel-editor>
-        <button id="replStart">Start</button>
-        <button id="replStop">Stop</button>
+        <button id="replStart">▶️ Start</button>
+        <button id="replStop">⏸️ Stop</button>
         <script>
             document.getElementById('replStart').addEventListener('click', () => document.getElementById('repl').editor.evaluate());
             document.getElementById('replStop').addEventListener('click', () => document.getElementById('repl').editor.stop());
         </script>
+    </div>
+    <h2>Mutation history</h2>
+    <div id="mutationHistory">
+        <p>TODO</p>
     </div>
     <h2>Mutations</h2>
     <div id="mutationButtons"></div>

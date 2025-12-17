@@ -1,6 +1,9 @@
-const soundOptions = ["-", "bd", "sd", "rim", "hh", "oh", "lt", "mt", "ht", "rd", "cr"];
+var soundOptions = ["-", "bd", "sd", "rim", "hh", "oh", "lt", "mt", "ht", "rd", "cr"];
+// to make sure we have enough to choose from, also in mutations
+while (soundOptions.length < 10) {
+    soundOptions = soundOptions.concat(soundOptions);
+}
 var chosenSounds = [];
-var patternIndices = [];
 var currentPattern = [];
 var userHasInteracted = false;
 function showMutationButtons() {
@@ -21,7 +24,6 @@ function showMutationButtons() {
 }
 document.addEventListener('DOMContentLoaded', function () {
     showMutationButtons();
-    patternGenerate();
 });
 function embedRepl(code) {
     replStop();
@@ -46,7 +48,7 @@ function renderPattern() {
             patternString += " ";
         }
     }
-    const fullCode = "setcpm(110)\n" + "s(`<[" + patternString + "]@" + (currentPattern.length / 2) + ">`)";
+    const fullCode = "setcpm(120)\n" + "s(`<[" + patternString + "]@" + (currentPattern.length / 2) + ">`)";
     embedRepl(fullCode);
 }
 function patternGenerate() {
@@ -54,9 +56,12 @@ function patternGenerate() {
     const numchosenSoundsUpper = parseInt(document.getElementById('numberOfSoundsUpper').value);
     const numchosenSounds = numchosenSoundsLower + Math.floor(Math.random() * (numchosenSoundsUpper - numchosenSoundsLower + 1));
     chosenSounds = [];
+    // can include repetition, on purpose
     for (let i = 0; i < numchosenSounds; i++) {
         chosenSounds.push(soundOptions[Math.floor(Math.random() * soundOptions.length)]);
     }
+    const chosenSoundsElement = document.getElementById('chosenSounds');
+    chosenSoundsElement.innerText = "Chosen sounds: " + chosenSounds.join(", ");
     const patternLengthLower = parseInt(document.getElementById('patternLengthLower').value);
     const patternLengthUpper = parseInt(document.getElementById('patternLengthUpper').value);
     const patternLength = patternLengthLower + Math.floor(Math.random() * (patternLengthUpper - patternLengthLower + 1));
@@ -90,7 +95,10 @@ const mutations = {
             args: {},
             apply: (pattern) => {
                 const distinctSounds = Array.from(new Set(pattern));
-                const soundToReplace = distinctSounds[Math.floor(Math.random() * distinctSounds.length)];
+                var soundToReplace = "-";
+                while (soundToReplace == "-") {
+                    soundToReplace = distinctSounds[Math.floor(Math.random() * distinctSounds.length)];
+                }
                 var newSound = soundToReplace;
                 while (newSound == soundToReplace || distinctSounds.includes(newSound)) {
                     newSound = soundOptions[Math.floor(Math.random() * soundOptions.length)];
@@ -108,22 +116,65 @@ const mutations = {
             shortLabel: "ChangeAllSounds",
             args: {},
             apply: (pattern) => {
-                const distinctSounds = Array.from(new Set(pattern));
+                const currentSounds = Array.from(new Set(pattern));
                 var newSounds = [];
-                for (let i = 0; i < distinctSounds.length; i++) {
-                    var newSound = distinctSounds[i];
-                    while (newSounds.includes(newSound) || distinctSounds.includes(newSound)) {
-                        newSound = soundOptions[Math.floor(Math.random() * soundOptions.length)];
+                for (let i = 0; i < currentSounds.length; i++) {
+                    var newSound = currentSounds[i];
+                    if (newSound !== "-") {
+                        while (newSounds.includes(newSound) || currentSounds.includes(newSound)) {
+                            newSound = soundOptions[Math.floor(Math.random() * soundOptions.length)];
+                        }
                     }
                     newSounds.push(newSound);
                 }
                 for (let i = 0; i < pattern.length; i++) {
-                    const index = distinctSounds.indexOf(pattern[i]);
-                    pattern[i] = newSounds[index];
+                    const soundIndex = currentSounds.indexOf(pattern[i]);
+                    pattern[i] = newSounds[soundIndex];
                 }
                 return pattern;
             }
         },
+        {
+            label: "Mute a random location in the pattern",
+            shortLabel: "MuteSound",
+            args: {},
+            apply: (pattern) => {
+                const distinctSounds = new Set(pattern);
+                distinctSounds.delete("-");
+                if (Array.from(distinctSounds).length <= 1) {
+                    console.log("Pattern has one or no unmuted sounds, cannot mute");
+                    return pattern;
+                }
+                var indexToMute;
+                do {
+                    indexToMute = Math.floor(Math.random() * pattern.length);
+                } while (pattern[indexToMute] == "-");
+                pattern[indexToMute] = "-";
+                return pattern;
+            }
+        },
+        {
+            label: "Unmute a random location in the pattern",
+            shortLabel: "UnmuteSound",
+            args: {},
+            apply: (pattern) => {
+                const distinctSounds = new Set(pattern);
+                if (!distinctSounds.has("-")) {
+                    console.log("Pattern has no muted sounds, cannot unmute");
+                    return pattern;
+                }
+                var indexToMute;
+                do {
+                    indexToMute = Math.floor(Math.random() * pattern.length);
+                } while (pattern[indexToMute] != "-");
+                var chosenSound = "-";
+                while (chosenSound == "-") {
+                    chosenSound = chosenSounds[Math.floor(Math.random() * chosenSounds.length)];
+                }
+                pattern[indexToMute] = chosenSound;
+                return pattern;
+            }
+        }
     ],
     "Order": [
         {
