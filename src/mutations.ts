@@ -1,4 +1,19 @@
 const mutations = {
+    "Soundbank": [
+        {
+            label: "Change soundbank",
+            shortLabel: "ChangeBank",
+            args: {},
+            apply: (pattern: string[]) => {
+                var newBank = state.bank;
+                while (newBank == state.bank) {
+                    newBank = bankOptions[Math.floor(Math.random() * bankOptions.length)];
+                }
+                state.bank = newBank;
+                return pattern;
+            }
+        },
+    ],
     "Sounds": [
         {
             label: "Randomly change a sound in the pattern",
@@ -78,21 +93,20 @@ const mutations = {
                     return pattern;
                 }
 
-                var indexToMute;
+                var indexToUnmute;
                 do {
-                    indexToMute = Math.floor(Math.random() * pattern.length);
-                } while (pattern[indexToMute] != "-")
-
+                    indexToUnmute = Math.floor(Math.random() * pattern.length);
+                } while (pattern[indexToUnmute] != "-")
 
                 var chosenSound = "-";
                 while (chosenSound == "-") {
-                    chosenSound = chosenSounds[Math.floor(Math.random() * chosenSounds.length)];
+                    chosenSound = state.chosenSounds[Math.floor(Math.random() * state.chosenSounds.length)];
                 }
 
-                pattern[indexToMute] = chosenSound;
+                pattern[indexToUnmute] = chosenSound;
                 return pattern;
             }
-        }
+        },
     ],
     "Order": [
         {
@@ -222,6 +236,6 @@ const mutations = {
             apply: (pattern: string[]) => {
                 return pattern.concat(pattern);
             }
-        }
+        },
     ]
 };

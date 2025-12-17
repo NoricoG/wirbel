@@ -3,9 +3,97 @@ var soundOptions = ["-", "bd", "sd", "rim", "hh", "oh", "lt", "mt", "ht", "rd", 
 while (soundOptions.length < 10) {
     soundOptions = soundOptions.concat(soundOptions);
 }
-var chosenSounds = [];
-var currentPattern = [];
-var userHasInteracted = false;
+// banks that have at most 4 missing drum sounds
+var bankOptions = [
+    "",
+    "9000",
+    "akailinn",
+    "akaimpc60",
+    "akaixr10",
+    "alesissr16",
+    "bossdr550",
+    "circuitsdrumtracks",
+    "compurhythm1000",
+    "compurhythm8000",
+    "d110",
+    "d70",
+    "dmx",
+    "dpm48",
+    "dr550",
+    "drumulator",
+    "emudrumulator",
+    "emusp12",
+    "jd990",
+    "korgm1",
+    "linn",
+    "linn9000",
+    "linndrum",
+    "linnlm1",
+    "linnlm2",
+    "lm1",
+    "lm2",
+    "m1",
+    "mc303",
+    "mpc60",
+    "mt32",
+    "oberheimdmx",
+    "r8",
+    "rm50",
+    "rolandcompurhythm1000",
+    "rolandcompurhythm8000",
+    "rolandd110",
+    "rolandd70",
+    "rolandjd990",
+    "rolandmc303",
+    "rolandmt32",
+    "rolandr8",
+    "rolands50",
+    "rolandtr505",
+    "rolandtr626",
+    "rolandtr707",
+    "rolandtr808",
+    "ry30",
+    "s50",
+    "sakatadpm48",
+    "sequentialcircuitsdrumtracks",
+    "sp12",
+    "sr16",
+    "tg33",
+    "tr505",
+    "tr626",
+    "tr707",
+    "tr808",
+    "xr10",
+    "yamaharm50",
+    "yamahary30",
+    "yamahatg33",
+];
+class State {
+    speed;
+    chosenSounds;
+    pattern;
+    bank;
+    constructor() {
+        this.speed = 120;
+        this.chosenSounds = [];
+        this.pattern = [];
+        this.bank = "";
+    }
+    toCode() {
+        const patternLength = this.pattern.length;
+        var patternString = "";
+        for (let i = 0; i < patternLength; i++) {
+            patternString += this.pattern[i] + " ";
+            const addExtraSpace = i + 1 == patternLength / 2;
+            if (addExtraSpace) {
+                patternString += " ";
+            }
+        }
+        var fullCode = "setcpm(120)\n" + "s(`<[" + patternString + "]@" + (patternLength / 2) + ">`)\n.bank('" + this.bank + "')";
+        return fullCode;
+    }
+}
+var state = new State();
 function showMutationButtons() {
     const container = document.getElementById('mutationButtons');
     container.innerHTML = "";
@@ -26,9 +114,6 @@ document.addEventListener('DOMContentLoaded', function () {
     showMutationButtons();
 });
 function embedRepl(code) {
-    replStop();
-    replLoad(code);
-    replStart();
 }
 function replStop() {
     document.getElementById('repl').editor.stop();
@@ -40,38 +125,33 @@ function replStart() {
     document.getElementById('repl').editor.evaluate();
 }
 function renderPattern() {
-    var patternString = "";
-    for (let i = 0; i < currentPattern.length; i++) {
-        patternString += currentPattern[i] + " ";
-        const addExtraSpace = i + 1 == currentPattern.length / 2;
-        if (addExtraSpace) {
-            patternString += " ";
-        }
-    }
-    const fullCode = "setcpm(120)\n" + "s(`<[" + patternString + "]@" + (currentPattern.length / 2) + ">`)";
-    embedRepl(fullCode);
+    replStop();
+    const fullCode = state.toCode();
+    replLoad(fullCode);
+    replStart();
 }
 function patternGenerate() {
     const numchosenSoundsLower = parseInt(document.getElementById('numberOfSoundsLower').value);
     const numchosenSoundsUpper = parseInt(document.getElementById('numberOfSoundsUpper').value);
     const numchosenSounds = numchosenSoundsLower + Math.floor(Math.random() * (numchosenSoundsUpper - numchosenSoundsLower + 1));
-    chosenSounds = [];
+    state.chosenSounds = [];
     // can include repetition, on purpose
     for (let i = 0; i < numchosenSounds; i++) {
-        chosenSounds.push(soundOptions[Math.floor(Math.random() * soundOptions.length)]);
+        state.chosenSounds.push(soundOptions[Math.floor(Math.random() * soundOptions.length)]);
     }
     const chosenSoundsElement = document.getElementById('chosenSounds');
-    chosenSoundsElement.innerText = "Chosen sounds: " + chosenSounds.join(", ");
+    chosenSoundsElement.innerText = "Chosen sounds: " + state.chosenSounds.join(", ");
+    state.bank = bankOptions[Math.floor(Math.random() * bankOptions.length)];
     const patternLengthLower = parseInt(document.getElementById('patternLengthLower').value);
     const patternLengthUpper = parseInt(document.getElementById('patternLengthUpper').value);
     const patternLength = patternLengthLower + Math.floor(Math.random() * (patternLengthUpper - patternLengthLower + 1));
-    currentPattern = [];
+    state.pattern = [];
     for (let i = 0; i < patternLength; i++) {
-        const newSound = chosenSounds[Math.floor(Math.random() * chosenSounds.length)];
-        currentPattern.push(newSound);
+        const newSound = state.chosenSounds[Math.floor(Math.random() * state.chosenSounds.length)];
+        state.pattern.push(newSound);
     }
-    console.log("Generated pattern: " + currentPattern);
-    const distinctSounds = Array.from(new Set(currentPattern));
+    console.log("Generated pattern: " + state.pattern);
+    const distinctSounds = Array.from(new Set(state.pattern));
     if (distinctSounds.length == 1) {
         console.log("Regenerating pattern because it had only one distinct sound");
         patternGenerate();
@@ -82,12 +162,27 @@ function patternGenerate() {
 function applyMutation(category, mutationId) {
     const mutation = mutations[category][mutationId];
     console.log("Applying mutation " + mutation.label);
-    console.log(currentPattern, "before");
-    currentPattern = mutation.apply(currentPattern);
-    console.log(currentPattern, "after");
+    console.log(state.pattern, "before");
+    state.pattern = mutation.apply(state.pattern);
+    console.log(state.pattern, "after");
     renderPattern();
 }
 const mutations = {
+    "Soundbank": [
+        {
+            label: "Change soundbank",
+            shortLabel: "ChangeBank",
+            args: {},
+            apply: (pattern) => {
+                var newBank = state.bank;
+                while (newBank == state.bank) {
+                    newBank = bankOptions[Math.floor(Math.random() * bankOptions.length)];
+                }
+                state.bank = newBank;
+                return pattern;
+            }
+        },
+    ],
     "Sounds": [
         {
             label: "Randomly change a sound in the pattern",
@@ -163,18 +258,18 @@ const mutations = {
                     console.log("Pattern has no muted sounds, cannot unmute");
                     return pattern;
                 }
-                var indexToMute;
+                var indexToUnmute;
                 do {
-                    indexToMute = Math.floor(Math.random() * pattern.length);
-                } while (pattern[indexToMute] != "-");
+                    indexToUnmute = Math.floor(Math.random() * pattern.length);
+                } while (pattern[indexToUnmute] != "-");
                 var chosenSound = "-";
                 while (chosenSound == "-") {
-                    chosenSound = chosenSounds[Math.floor(Math.random() * chosenSounds.length)];
+                    chosenSound = state.chosenSounds[Math.floor(Math.random() * state.chosenSounds.length)];
                 }
-                pattern[indexToMute] = chosenSound;
+                pattern[indexToUnmute] = chosenSound;
                 return pattern;
             }
-        }
+        },
     ],
     "Order": [
         {
@@ -304,6 +399,6 @@ const mutations = {
             apply: (pattern) => {
                 return pattern.concat(pattern);
             }
-        }
+        },
     ]
 };

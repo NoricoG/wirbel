@@ -1,5 +1,2 @@
 .vscode/
-*.txt
-
-node_modules/
-vite/ 
+ignore/
