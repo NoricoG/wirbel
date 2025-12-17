@@ -1,0 +1,9 @@
+body {
+    font-family: Tahoma, sans-serif;
+}
+
+.row {
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+}

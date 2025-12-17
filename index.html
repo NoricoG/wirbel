@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wirbel</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="compiled/script.js"></script>
+    <script src="https://unpkg.com/@strudel/repl@1.2.7"></script>
+</head>
+
+<body>
+    <h2>Generator</h2>
+    <div>
+        <p>Number of sounds (3 is good)</p>
+        <div class="row">
+            <input type="number" id="numberOfSoundsLower" min="2" value="2" />
+            <p>to</p>
+            <input type="number" id="numberOfSoundsUpper" min="2" value="4" />
+        </div>
+        <p>Pattern length (8 is good)</p>
+        <div class="row">
+            <input type="number" id="patternLengthLower" min="2" value="4" />
+            <p>to</p>
+            <input type="number" id="patternLengthUpper" min="2" value="8" />
+        </div>
+        <button onClick="patternGenerate()">Generate new pattern</button>
+    </div>
+    <div id="repl-container">
+        <strudel-editor id="repl">
+            <!-- // Press the button Generate new pattern -->
+        </strudel-editor>
+        <button id="replStart">Start</button>
+        <button id="replStop">Stop</button>
+        <script>
+            document.getElementById('replStart').addEventListener('click', () => document.getElementById('repl').editor.evaluate());
+            document.getElementById('replStop').addEventListener('click', () => document.getElementById('repl').editor.stop());
+        </script>
+    </div>
+    <h2>Mutations</h2>
+    <div id="mutationButtons"></div>
+
+</body>
+
+</html>
