@@ -13,13 +13,13 @@
 <body>
     <h2>Generator</h2>
     <div>
-        <p>Number of sounds (3 is good)</p>
+        <p>Number of sounds</p>
         <div class="row">
             <input type="number" id="numberOfSoundsLower" min="2" value="2" />
             <p>to</p>
             <input type="number" id="numberOfSoundsUpper" min="2" value="4" />
         </div>
-        <p>Pattern length (8 is good)</p>
+        <p>Pattern length</p>
         <div class="row">
             <input type="number" id="patternLengthLower" min="2" value="4" />
             <p>to</p>
@@ -27,22 +27,27 @@
         </div>
         <button id="generate-button" onClick="patternGenerate()">🎲 Generate new pattern</button>
     </div>
-    <h2>Current pattern</h2>
+    <h2 id="currentVersion">Current pattern</h2>
     <p id="chosenSounds">Chosen sounds: </p>
     <div id="repl-container">
-        <strudel-editor id="repl">
+        <strudel-editor id="currentState">
             <!-- // Press the button 🎲 Generate new pattern -->
         </strudel-editor>
-        <button id="replStart">▶️ Start</button>
-        <button id="replStop">⏸️ Stop</button>
-        <script>
-            document.getElementById('replStart').addEventListener('click', () => document.getElementById('repl').editor.evaluate());
-            document.getElementById('replStop').addEventListener('click', () => document.getElementById('repl').editor.stop());
-        </script>
+        <button id="replStart" onClick="replStart()">▶️ Play</button>
+        <button id="replStop" onClick="replStop()">⏸️ Stop</button>
     </div>
     <h2>Mutation history</h2>
     <div id="mutationHistory">
-        <p>TODO</p>
+        <h3 id="versionMinusOne">Previous pattern</h3>
+        <strudel-editor id="stateMinusOne">
+            <!-- // Previous pattern will appear here -->
+        </strudel-editor>
+        <button onClick="restorePreviousState(1)">Restore this</button>
+        <h3 id="versionMinusTwo">Previous pattern</h3>
+        <strudel-editor id="stateMinusTwo">
+            <!-- // Previous pattern will appear here -->
+        </strudel-editor>
+        <button onClick="restorePreviousState(2)">Restore this</button>
     </div>
     <h2>Mutations</h2>
     <div id="mutationButtons"></div>
