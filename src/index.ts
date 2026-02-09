@@ -1,4 +1,5 @@
-var soundOptions = ["-", "bd", "sd", "rim", "hh", "oh", "lt", "mt", "ht", "rd", "cr"];
+var soundOptions = ["-", "bd", "cb", "cp", "cr", "hh", "ht", "lt", "mt", "oh", "perc", "rd", "rim", "sd", "sh", "tb"];
+var soundIgnored = ["misc"]
 // to make sure we have enough to choose from, also in mutations
 while (soundOptions.length < 10) {
     soundOptions = soundOptions.concat(soundOptions);
@@ -6,68 +7,39 @@ while (soundOptions.length < 10) {
 
 // banks that have at most 4 missing drum sounds
 var bankOptions = [
-    "",
-    "9000",
+    "", // Strudel default, twice for higher chance
+    "", // Strudel default, twice for higher chance
     "AkaiLinn",
-    "AkaiMPC60",
+    "AkaiMPC60", // 1988
     "AkaiXR10",
-    "AlesisSR16",
-    "BossDR550",
-    "CircuitsDrumTracks",
-    "CompuRhythm1000",
-    "CompuRhythm8000",
-    "D110",
-    "D70",
-    "DMX",
-    "DPM48",
-    "DR550",
-    "Drumulator",
-    "EmuDrumulator",
+    "AlesisSR16", // 1990
+    "BossDR550", // 1989
+    "CircuitsDrumTracks", // 1984
+    "CompuRhythm1000", // 1986, CR-1000
+    "CompuRhythm8000", // 1981, CR-8000
+    "EmuDrumulator", // 1983
     "EmuSP12",
-    "JD990",
-    "KorgM1",
-    "Linn",
-    "Linn9000",
-    "Linndrum",
-    "LinnLM1",
+    "KorgM1", // 1988
+    "Linn9000", // 1984
+    "Linndrum", // 1982
+    "LinnLM1", // 1980
     "LinnLM2",
-    "LM1",
-    "LM2",
-    "M1",
-    "MC303",
-    "MPC60",
-    "MT32",
-    "OberheimDMX",
-    "R8",
-    "RM50",
-    "RolandCompuRhythm1000",
-    "RolandCompuRhythm8000",
+    "OberheimDMX", // 1980
     "RolandD110",
     "RolandD70",
     "RolandJD990",
     "RolandMC303",
-    "RolandMT32",
-    "RolandR8",
-    "RolandS50",
-    "RolandTR505",
+    "RolandMT32", // 1987
+    "RolandR8", // 1989
+    "RolandS50", // 1986
+    "RolandTR505", // 1986
     "RolandTR626",
-    "RolandTR707",
-    "RolandTR808",
-    "RY30",
-    "S50",
-    "SakataDPM48",
-    "SequentialCircuitsDrumTracks",
-    "SP12",
-    "SR16",
-    "TG33",
-    "TR505",
-    "TR626",
-    "TR707",
-    "TR808",
-    "XR10",
-    "YamahaRM50",
-    "YamahaRY30",
-    "YamahaTG33",
+    "RolandTR707", // 1985
+    "RolandTR808", // 1980
+    "SakataDPM48", // 1984
+    "YamahaRM50", // 1992
+    "YamahaRY30", // 1991
+    "YamahaTG33", // 1990
 ]
 
 class State {
@@ -114,6 +86,9 @@ var state = new State();
 var previousStates = [] as State[];
 const maxPreviousStates = 10;
 
+var repls = [] as any[];
+var playingRepl = -1;
+
 type Mutation = {
     label: string,
     shortLabel: string,
@@ -122,6 +97,8 @@ type Mutation = {
 }
 
 function showMutationButtons() {
+    document.getElementById('mutations').style.display = 'block';
+
     const container = document.getElementById('mutationButtons');
     container.innerHTML = "";
     for (const [category, categoryMutations] of Object.entries(mutations)) {
@@ -138,27 +115,43 @@ function showMutationButtons() {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-    showMutationButtons();
+    repls = [
+        document.getElementById('currentState'),
+        document.getElementById('stateMinusOne'),
+        document.getElementById('stateMinusTwo'),
+        document.getElementById('stateMinusThree'),
+    ]
 });
 
-async function replStop() {
-    (document.getElementById('currentState') as any).editor.stop();
+async function replStopAll() {
+    for (let i = 0; i <= 3; i++) {
+        await replStop(i);
+    }
 }
 
-function replLoad(code: string) {
-    (document.getElementById('currentState') as any).editor.setCode(code);
+async function replStop(index: number) {
+    if (index == -1) {
+        return;
+    }
+    repls[index].editor.stop();
 }
 
-function replStart() {
-    (document.getElementById('currentState') as any).editor.evaluate();
+function replLoad(index: number, code: string) {
+    repls[index].editor.setCode(code);
 }
 
-function renderPattern() {
-    replStop().then(() => {
-        const fullCode = state.toCode();
-        replLoad(fullCode);
-        replStart();
-    });
+function replStart(index: number) {
+    if (playingRepl != index) {
+        replStop(playingRepl);
+        playingRepl = index;
+    }
+    repls[index].editor.evaluate();
+}
+
+function renderPattern(index: number) {
+    const fullCode = state.toCode();
+    replLoad(index, fullCode);
+    replStart(index);
 
     const chosenSoundsElement = document.getElementById('chosenSounds');
     chosenSoundsElement.innerText = "Chosen sounds: " + state.chosenSounds.join(", ");
@@ -168,6 +161,10 @@ function renderPattern() {
 }
 
 function patternGenerate() {
+    if (state.version == 0) {
+        showMutationButtons();
+    }
+
     const newVersion = state.version + 1;
     makeSpaceForNextState();
     state.version = newVersion;
@@ -203,7 +200,7 @@ function patternGenerate() {
         return;
     }
 
-    renderPattern();
+    renderPattern(0);
 }
 
 function applyMutation(category: string, mutationId: number) {
@@ -215,7 +212,7 @@ function applyMutation(category: string, mutationId: number) {
     state = mutation.apply(state);
     state.version = newVersion;
 
-    renderPattern();
+    renderPattern(0);
 }
 
 function restorePreviousState(iterations: number) {
@@ -231,7 +228,7 @@ function restorePreviousState(iterations: number) {
 
     showMutationHistory();
 
-    renderPattern();
+    renderPattern(0);
 
 }
 
@@ -250,18 +247,30 @@ function makeSpaceForNextState() {
 
 function showMutationHistory() {
     if (previousStates.length > 0 && previousStates[0].version > 0) {
+        document.getElementById("patternMinusOne").style.display = "block";
         (document.getElementById('stateMinusOne') as any).editor.setCode(previousStates[0].toCode());
         document.getElementById('versionMinusOne').innerText = "Previous pattern (#" + previousStates[0].version + ")";
     } else {
+        document.getElementById("patternMinusOne").style.display = "none";
         (document.getElementById('stateMinusOne') as any).editor.setCode("// No previous state");
-        document.getElementById('versionMinusOne').innerText = "Previous pattern";
     }
 
     if (previousStates.length > 1 && previousStates[1].version > 0) {
+        document.getElementById("patternMinusTwo").style.display = "block";
         (document.getElementById('stateMinusTwo') as any).editor.setCode(previousStates[1].toCode());
         document.getElementById('versionMinusTwo').innerText = "Previous pattern (#" + previousStates[1].version + ")";
     } else {
+        document.getElementById("patternMinusTwo").style.display = "none";
         (document.getElementById('stateMinusTwo') as any).editor.setCode("// No previous state");
-        document.getElementById('versionMinusTwo').innerText = "Previous pattern";
+
+    }
+
+    if (previousStates.length > 2 && previousStates[2].version > 0) {
+        document.getElementById("patternMinusThree").style.display = "block";
+        (document.getElementById('stateMinusThree') as any).editor.setCode(previousStates[2].toCode());
+        document.getElementById('versionMinusThree').innerText = "Previous pattern (#" + previousStates[2].version + ")";
+    } else {
+        document.getElementById("patternMinusThree").style.display = "none";
+        (document.getElementById('stateMinusThree') as any).editor.setCode("// No previous state");
     }
 }

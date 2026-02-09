@@ -1,37 +1,7 @@
 const mutations = {
-    "Soundbank": [
-        {
-            label: "Change soundbank",
-            shortLabel: "ChangeBank",
-            args: {},
-            apply: (state: State) => {
-                var newBank = state.bank;
-                while (newBank == state.bank) {
-                    newBank = bankOptions[Math.floor(Math.random() * bankOptions.length)];
-                }
-                state.bank = newBank;
-                return state;
-            }
-        },
-    ],
     "Sounds": [
         {
-            label: "Change one location in the pattern to a random chosen sound",
-            shortLabel: "ChangeToChosen",
-            args: {},
-            apply: (state: State) => {
-                const distinctSounds = Array.from(new Set(state.pattern));
-                var indexToChange = Math.floor(Math.random() * state.pattern.length);
-                var newSound = state.pattern[indexToChange];
-                while (newSound == state.pattern[indexToChange]) {
-                    newSound = state.chosenSounds[Math.floor(Math.random() * state.chosenSounds.length)];
-                }
-                state.pattern[indexToChange] = newSound;
-                return state;
-            }
-        },
-        {
-            label: "Change one of the sounds everywhere in the pattern",
+            label: "Change one sound",
             shortLabel: "ChangeSound",
             args: {},
             apply: (state: State) => {
@@ -53,16 +23,18 @@ const mutations = {
             }
         },
         {
-            label: "Change all of the sounds in the pattern",
+            label: "Change all sounds",
             shortLabel: "ChangeAllSounds",
             args: {},
             apply: (state: State) => {
-                const currentSounds = Array.from(new Set(state.pattern));
+                const currentSounds = state.chosenSounds;
                 var newSounds = [] as string[];
 
                 for (let i = 0; i < currentSounds.length; i++) {
                     var newSound = currentSounds[i];
+                    // don't change -
                     if (newSound !== "-") {
+                        // make sure newSound is unique and different
                         while (newSound == "-" || newSounds.includes(newSound) || currentSounds.includes(newSound)) {
                             newSound = soundOptions[Math.floor(Math.random() * soundOptions.length)];
                         }
@@ -73,11 +45,42 @@ const mutations = {
                     const soundIndex = currentSounds.indexOf(state.pattern[i]);
                     state.pattern[i] = newSounds[soundIndex];
                 }
+                state.chosenSounds = newSounds;
                 return state;
             }
         },
         {
-            label: "Mute a random location in the pattern",
+            label: "Change soundbank",
+            shortLabel: "ChangeBank",
+            args: {},
+            apply: (state: State) => {
+                var newBank = state.bank;
+                while (newBank == state.bank) {
+                    newBank = bankOptions[Math.floor(Math.random() * bankOptions.length)];
+                }
+                state.bank = newBank;
+                return state;
+            }
+        },
+    ],
+    "Individual notes": [
+        {
+            label: "Change one note",
+            shortLabel: "ChangeToChosen",
+            args: {},
+            apply: (state: State) => {
+                const distinctSounds = Array.from(new Set(state.pattern));
+                var indexToChange = Math.floor(Math.random() * state.pattern.length);
+                var newSound = state.pattern[indexToChange];
+                while (newSound == state.pattern[indexToChange]) {
+                    newSound = state.chosenSounds[Math.floor(Math.random() * state.chosenSounds.length)];
+                }
+                state.pattern[indexToChange] = newSound;
+                return state;
+            }
+        },
+        {
+            label: "Mute one note",
             shortLabel: "MuteSound",
             args: {},
             apply: (state: State) => {
@@ -98,7 +101,7 @@ const mutations = {
             }
         },
         {
-            label: "Unmute a random location in the pattern",
+            label: "Unmute one note",
             shortLabel: "UnmuteSound",
             args: {},
             apply: (state: State) => {
@@ -122,16 +125,14 @@ const mutations = {
                 return state;
             }
         },
-    ],
-    "Order": [
         {
-            label: "Swap two random elements",
+            label: "Swap two notes",
             shortLabel: "Swap",
             args: {},
             apply: (state: State) => {
                 const index1 = Math.floor(Math.random() * state.pattern.length);
                 var index2 = index1;
-                while (index2 == index1) {
+                while (index2 == index1 || state.pattern[index2] == state.pattern[index1]) {
                     index2 = Math.floor(Math.random() * state.pattern.length);
                 }
                 const spare = state.pattern[index1];
@@ -140,8 +141,53 @@ const mutations = {
                 return state;
             }
         },
+    ],
+    "Individual insert/remove": [
         {
-            label: "Completely shuffle pattern",
+            label: "Duplicate random note",
+            shortLabel: "DuplicateRandom",
+            args: {},
+            apply: (state: State) => {
+                const randomIndex = Math.floor(Math.random() * state.pattern.length);
+                state.pattern.splice(randomIndex, 0, state.pattern[randomIndex]);
+                return state;
+            }
+        },
+        {
+            label: "Insert random note",
+            shortLabel: "InsertRandom",
+            args: {},
+            apply: (state: State) => {
+                const distinctSounds = Array.from(new Set(state.pattern));
+                const randomIndex = Math.floor(Math.random() * (state.pattern.length + 1));
+                const randomSound = distinctSounds[Math.floor(Math.random() * distinctSounds.length)];
+                state.pattern.splice(randomIndex, 0, randomSound);
+                return state;
+            }
+        },
+        {
+            label: "Remove last note",
+            shortLabel: "RemoveLast",
+            args: {},
+            apply: (state: State) => {
+                state.pattern.pop();
+                return state;
+            }
+        },
+        {
+            label: "Remove random note",
+            shortLabel: "RemoveRandom",
+            args: {},
+            apply: (state: State) => {
+                const randomIndex = Math.floor(Math.random() * state.pattern.length);
+                state.pattern.splice(randomIndex, 1);
+                return state;
+            }
+        },
+    ],
+    "Order": [
+        {
+            label: "Shuffle pattern",
             shortLabel: "Shuffle",
             args: {},
             apply: (state: State) => {
@@ -155,7 +201,7 @@ const mutations = {
             },
         },
         {
-            label: "Reverse pattern completely",
+            label: "Reverse pattern",
             shortLabel: "Reverse",
             args: {},
             apply: (state: State) => {
@@ -164,7 +210,7 @@ const mutations = {
             }
         },
         {
-            label: "Reverse pattern partially",
+            label: "Partially reverse pattern",
             shortLabel: "ReversePartial",
             args: {},
             apply: (state: State) => {
@@ -177,6 +223,8 @@ const mutations = {
                 return state;
             }
         },
+    ],
+    "Cut copy": [
         {
             label: "Shift left",
             shortLabel: "ShiftLeft",
@@ -200,49 +248,6 @@ const mutations = {
                     state.pattern[i] = state.pattern[i - 1];
                 }
                 state.pattern[0] = spare;
-                return state;
-            }
-        },
-    ],
-    "Cut copy": [
-        {
-            label: "Remove last element",
-            shortLabel: "RemoveLast",
-            args: {},
-            apply: (state: State) => {
-                state.pattern.pop();
-                return state;
-            }
-        },
-        {
-            label: "Remove element at random location",
-            shortLabel: "RemoveRandom",
-            args: {},
-            apply: (state: State) => {
-                const randomIndex = Math.floor(Math.random() * state.pattern.length);
-                state.pattern.splice(randomIndex, 1);
-                return state;
-            }
-        },
-        {
-            label: "Duplicate element at random location",
-            shortLabel: "DuplicateRandom",
-            args: {},
-            apply: (state: State) => {
-                const randomIndex = Math.floor(Math.random() * state.pattern.length);
-                state.pattern.splice(randomIndex, 0, state.pattern[randomIndex]);
-                return state;
-            }
-        },
-        {
-            label: "Insert extra element at random location",
-            shortLabel: "InsertRandom",
-            args: {},
-            apply: (state: State) => {
-                const distinctSounds = Array.from(new Set(state.pattern));
-                const randomIndex = Math.floor(Math.random() * (state.pattern.length + 1));
-                const randomSound = distinctSounds[Math.floor(Math.random() * distinctSounds.length)];
-                state.pattern.splice(randomIndex, 0, randomSound);
                 return state;
             }
         },

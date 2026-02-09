@@ -1,72 +1,44 @@
-var soundOptions = ["-", "bd", "sd", "rim", "hh", "oh", "lt", "mt", "ht", "rd", "cr"];
+var soundOptions = ["-", "bd", "cb", "cp", "cr", "hh", "ht", "lt", "mt", "oh", "perc", "rd", "rim", "sd", "sh", "tb"];
+var soundIgnored = ["misc"];
 // to make sure we have enough to choose from, also in mutations
 while (soundOptions.length < 10) {
     soundOptions = soundOptions.concat(soundOptions);
 }
 // banks that have at most 4 missing drum sounds
 var bankOptions = [
-    "",
-    "9000",
+    "", // Strudel default, twice for higher chance
+    "", // Strudel default, twice for higher chance
     "AkaiLinn",
-    "AkaiMPC60",
+    "AkaiMPC60", // 1988
     "AkaiXR10",
-    "AlesisSR16",
-    "BossDR550",
-    "CircuitsDrumTracks",
-    "CompuRhythm1000",
-    "CompuRhythm8000",
-    "D110",
-    "D70",
-    "DMX",
-    "DPM48",
-    "DR550",
-    "Drumulator",
-    "EmuDrumulator",
+    "AlesisSR16", // 1990
+    "BossDR550", // 1989
+    "CircuitsDrumTracks", // 1984
+    "CompuRhythm1000", // 1986, CR-1000
+    "CompuRhythm8000", // 1981, CR-8000
+    "EmuDrumulator", // 1983
     "EmuSP12",
-    "JD990",
-    "KorgM1",
-    "Linn",
-    "Linn9000",
-    "Linndrum",
-    "LinnLM1",
+    "KorgM1", // 1988
+    "Linn9000", // 1984
+    "Linndrum", // 1982
+    "LinnLM1", // 1980
     "LinnLM2",
-    "LM1",
-    "LM2",
-    "M1",
-    "MC303",
-    "MPC60",
-    "MT32",
-    "OberheimDMX",
-    "R8",
-    "RM50",
-    "RolandCompuRhythm1000",
-    "RolandCompuRhythm8000",
+    "OberheimDMX", // 1980
     "RolandD110",
     "RolandD70",
     "RolandJD990",
     "RolandMC303",
-    "RolandMT32",
-    "RolandR8",
-    "RolandS50",
-    "RolandTR505",
+    "RolandMT32", // 1987
+    "RolandR8", // 1989
+    "RolandS50", // 1986
+    "RolandTR505", // 1986
     "RolandTR626",
-    "RolandTR707",
-    "RolandTR808",
-    "RY30",
-    "S50",
-    "SakataDPM48",
-    "SequentialCircuitsDrumTracks",
-    "SP12",
-    "SR16",
-    "TG33",
-    "TR505",
-    "TR626",
-    "TR707",
-    "TR808",
-    "XR10",
-    "YamahaRM50",
-    "YamahaRY30",
-    "YamahaTG33",
+    "RolandTR707", // 1985
+    "RolandTR808", // 1980
+    "SakataDPM48", // 1984
+    "YamahaRM50", // 1992
+    "YamahaRY30", // 1991
+    "YamahaTG33", // 1990
 ];
 class State {
     version = 0;
@@ -106,7 +78,10 @@ class State {
 var state = new State();
 var previousStates = [];
 const maxPreviousStates = 10;
+var repls = [];
+var playingRepl = -1;
 function showMutationButtons() {
+    document.getElementById('mutations').style.display = 'block';
     const container = document.getElementById('mutationButtons');
     container.innerHTML = "";
     for (const [category, categoryMutations] of Object.entries(mutations)) {
@@ -123,29 +98,47 @@ function showMutationButtons() {
     ;
 }
 document.addEventListener('DOMContentLoaded', function () {
-    showMutationButtons();
+    repls = [
+        document.getElementById('currentState'),
+        document.getElementById('stateMinusOne'),
+        document.getElementById('stateMinusTwo'),
+        document.getElementById('stateMinusThree'),
+    ];
 });
-async function replStop() {
-    document.getElementById('currentState').editor.stop();
+async function replStopAll() {
+    for (let i = 0; i <= 3; i++) {
+        await replStop(i);
+    }
 }
-function replLoad(code) {
-    document.getElementById('currentState').editor.setCode(code);
+async function replStop(index) {
+    if (index == -1) {
+        return;
+    }
+    repls[index].editor.stop();
 }
-function replStart() {
-    document.getElementById('currentState').editor.evaluate();
+function replLoad(index, code) {
+    repls[index].editor.setCode(code);
 }
-function renderPattern() {
-    replStop().then(() => {
-        const fullCode = state.toCode();
-        replLoad(fullCode);
-        replStart();
-    });
+function replStart(index) {
+    if (playingRepl != index) {
+        replStop(playingRepl);
+        playingRepl = index;
+    }
+    repls[index].editor.evaluate();
+}
+function renderPattern(index) {
+    const fullCode = state.toCode();
+    replLoad(index, fullCode);
+    replStart(index);
     const chosenSoundsElement = document.getElementById('chosenSounds');
     chosenSoundsElement.innerText = "Chosen sounds: " + state.chosenSounds.join(", ");
     const versionElement = document.getElementById('currentVersion');
     versionElement.innerText = "Current pattern (#" + state.version + ")";
 }
 function patternGenerate() {
+    if (state.version == 0) {
+        showMutationButtons();
+    }
     const newVersion = state.version + 1;
     makeSpaceForNextState();
     state.version = newVersion;
@@ -173,7 +166,7 @@ function patternGenerate() {
         patternGenerate();
         return;
     }
-    renderPattern();
+    renderPattern(0);
 }
 function applyMutation(category, mutationId) {
     makeSpaceForNextState();
@@ -181,7 +174,7 @@ function applyMutation(category, mutationId) {
     const mutation = mutations[category][mutationId];
     state = mutation.apply(state);
     state.version = newVersion;
-    renderPattern();
+    renderPattern(0);
 }
 function restorePreviousState(iterations) {
     state = previousStates[0].copy();
@@ -193,7 +186,7 @@ function restorePreviousState(iterations) {
         return restorePreviousState(iterations - 1);
     }
     showMutationHistory();
-    renderPattern();
+    renderPattern(0);
 }
 function makeSpaceForNextState() {
     if (previousStates.length < maxPreviousStates) {
@@ -207,56 +200,37 @@ function makeSpaceForNextState() {
 }
 function showMutationHistory() {
     if (previousStates.length > 0 && previousStates[0].version > 0) {
+        document.getElementById("patternMinusOne").style.display = "block";
         document.getElementById('stateMinusOne').editor.setCode(previousStates[0].toCode());
         document.getElementById('versionMinusOne').innerText = "Previous pattern (#" + previousStates[0].version + ")";
     }
     else {
+        document.getElementById("patternMinusOne").style.display = "none";
         document.getElementById('stateMinusOne').editor.setCode("// No previous state");
-        document.getElementById('versionMinusOne').innerText = "Previous pattern";
     }
     if (previousStates.length > 1 && previousStates[1].version > 0) {
+        document.getElementById("patternMinusTwo").style.display = "block";
         document.getElementById('stateMinusTwo').editor.setCode(previousStates[1].toCode());
         document.getElementById('versionMinusTwo').innerText = "Previous pattern (#" + previousStates[1].version + ")";
     }
     else {
+        document.getElementById("patternMinusTwo").style.display = "none";
         document.getElementById('stateMinusTwo').editor.setCode("// No previous state");
-        document.getElementById('versionMinusTwo').innerText = "Previous pattern";
+    }
+    if (previousStates.length > 2 && previousStates[2].version > 0) {
+        document.getElementById("patternMinusThree").style.display = "block";
+        document.getElementById('stateMinusThree').editor.setCode(previousStates[2].toCode());
+        document.getElementById('versionMinusThree').innerText = "Previous pattern (#" + previousStates[2].version + ")";
+    }
+    else {
+        document.getElementById("patternMinusThree").style.display = "none";
+        document.getElementById('stateMinusThree').editor.setCode("// No previous state");
     }
 }
 const mutations = {
-    "Soundbank": [
-        {
-            label: "Change soundbank",
-            shortLabel: "ChangeBank",
-            args: {},
-            apply: (state) => {
-                var newBank = state.bank;
-                while (newBank == state.bank) {
-                    newBank = bankOptions[Math.floor(Math.random() * bankOptions.length)];
-                }
-                state.bank = newBank;
-                return state;
-            }
-        },
-    ],
     "Sounds": [
         {
-            label: "Change one location in the pattern to a random chosen sound",
-            shortLabel: "ChangeToChosen",
-            args: {},
-            apply: (state) => {
-                const distinctSounds = Array.from(new Set(state.pattern));
-                var indexToChange = Math.floor(Math.random() * state.pattern.length);
-                var newSound = state.pattern[indexToChange];
-                while (newSound == state.pattern[indexToChange]) {
-                    newSound = state.chosenSounds[Math.floor(Math.random() * state.chosenSounds.length)];
-                }
-                state.pattern[indexToChange] = newSound;
-                return state;
-            }
-        },
-        {
-            label: "Change one of the sounds everywhere in the pattern",
+            label: "Change one sound",
             shortLabel: "ChangeSound",
             args: {},
             apply: (state) => {
@@ -278,15 +252,17 @@ const mutations = {
             }
         },
         {
-            label: "Change all of the sounds in the pattern",
+            label: "Change all sounds",
             shortLabel: "ChangeAllSounds",
             args: {},
             apply: (state) => {
-                const currentSounds = Array.from(new Set(state.pattern));
+                const currentSounds = state.chosenSounds;
                 var newSounds = [];
                 for (let i = 0; i < currentSounds.length; i++) {
                     var newSound = currentSounds[i];
+                    // don't change -
                     if (newSound !== "-") {
+                        // make sure newSound is unique and different
                         while (newSound == "-" || newSounds.includes(newSound) || currentSounds.includes(newSound)) {
                             newSound = soundOptions[Math.floor(Math.random() * soundOptions.length)];
                         }
@@ -297,11 +273,42 @@ const mutations = {
                     const soundIndex = currentSounds.indexOf(state.pattern[i]);
                     state.pattern[i] = newSounds[soundIndex];
                 }
+                state.chosenSounds = newSounds;
                 return state;
             }
         },
         {
-            label: "Mute a random location in the pattern",
+            label: "Change soundbank",
+            shortLabel: "ChangeBank",
+            args: {},
+            apply: (state) => {
+                var newBank = state.bank;
+                while (newBank == state.bank) {
+                    newBank = bankOptions[Math.floor(Math.random() * bankOptions.length)];
+                }
+                state.bank = newBank;
+                return state;
+            }
+        },
+    ],
+    "Individual notes": [
+        {
+            label: "Change one note",
+            shortLabel: "ChangeToChosen",
+            args: {},
+            apply: (state) => {
+                const distinctSounds = Array.from(new Set(state.pattern));
+                var indexToChange = Math.floor(Math.random() * state.pattern.length);
+                var newSound = state.pattern[indexToChange];
+                while (newSound == state.pattern[indexToChange]) {
+                    newSound = state.chosenSounds[Math.floor(Math.random() * state.chosenSounds.length)];
+                }
+                state.pattern[indexToChange] = newSound;
+                return state;
+            }
+        },
+        {
+            label: "Mute one note",
             shortLabel: "MuteSound",
             args: {},
             apply: (state) => {
@@ -320,7 +327,7 @@ const mutations = {
             }
         },
         {
-            label: "Unmute a random location in the pattern",
+            label: "Unmute one note",
             shortLabel: "UnmuteSound",
             args: {},
             apply: (state) => {
@@ -341,16 +348,14 @@ const mutations = {
                 return state;
             }
         },
-    ],
-    "Order": [
         {
-            label: "Swap two random elements",
+            label: "Swap two notes",
             shortLabel: "Swap",
             args: {},
             apply: (state) => {
                 const index1 = Math.floor(Math.random() * state.pattern.length);
                 var index2 = index1;
-                while (index2 == index1) {
+                while (index2 == index1 || state.pattern[index2] == state.pattern[index1]) {
                     index2 = Math.floor(Math.random() * state.pattern.length);
                 }
                 const spare = state.pattern[index1];
@@ -359,8 +364,53 @@ const mutations = {
                 return state;
             }
         },
+    ],
+    "Individual insert/remove": [
         {
-            label: "Completely shuffle pattern",
+            label: "Duplicate random note",
+            shortLabel: "DuplicateRandom",
+            args: {},
+            apply: (state) => {
+                const randomIndex = Math.floor(Math.random() * state.pattern.length);
+                state.pattern.splice(randomIndex, 0, state.pattern[randomIndex]);
+                return state;
+            }
+        },
+        {
+            label: "Insert random note",
+            shortLabel: "InsertRandom",
+            args: {},
+            apply: (state) => {
+                const distinctSounds = Array.from(new Set(state.pattern));
+                const randomIndex = Math.floor(Math.random() * (state.pattern.length + 1));
+                const randomSound = distinctSounds[Math.floor(Math.random() * distinctSounds.length)];
+                state.pattern.splice(randomIndex, 0, randomSound);
+                return state;
+            }
+        },
+        {
+            label: "Remove last note",
+            shortLabel: "RemoveLast",
+            args: {},
+            apply: (state) => {
+                state.pattern.pop();
+                return state;
+            }
+        },
+        {
+            label: "Remove random note",
+            shortLabel: "RemoveRandom",
+            args: {},
+            apply: (state) => {
+                const randomIndex = Math.floor(Math.random() * state.pattern.length);
+                state.pattern.splice(randomIndex, 1);
+                return state;
+            }
+        },
+    ],
+    "Order": [
+        {
+            label: "Shuffle pattern",
             shortLabel: "Shuffle",
             args: {},
             apply: (state) => {
@@ -374,7 +424,7 @@ const mutations = {
             },
         },
         {
-            label: "Reverse pattern completely",
+            label: "Reverse pattern",
             shortLabel: "Reverse",
             args: {},
             apply: (state) => {
@@ -383,7 +433,7 @@ const mutations = {
             }
         },
         {
-            label: "Reverse pattern partially",
+            label: "Partially reverse pattern",
             shortLabel: "ReversePartial",
             args: {},
             apply: (state) => {
@@ -396,6 +446,8 @@ const mutations = {
                 return state;
             }
         },
+    ],
+    "Cut copy": [
         {
             label: "Shift left",
             shortLabel: "ShiftLeft",
@@ -419,49 +471,6 @@ const mutations = {
                     state.pattern[i] = state.pattern[i - 1];
                 }
                 state.pattern[0] = spare;
-                return state;
-            }
-        },
-    ],
-    "Cut copy": [
-        {
-            label: "Remove last element",
-            shortLabel: "RemoveLast",
-            args: {},
-            apply: (state) => {
-                state.pattern.pop();
-                return state;
-            }
-        },
-        {
-            label: "Remove element at random location",
-            shortLabel: "RemoveRandom",
-            args: {},
-            apply: (state) => {
-                const randomIndex = Math.floor(Math.random() * state.pattern.length);
-                state.pattern.splice(randomIndex, 1);
-                return state;
-            }
-        },
-        {
-            label: "Duplicate element at random location",
-            shortLabel: "DuplicateRandom",
-            args: {},
-            apply: (state) => {
-                const randomIndex = Math.floor(Math.random() * state.pattern.length);
-                state.pattern.splice(randomIndex, 0, state.pattern[randomIndex]);
-                return state;
-            }
-        },
-        {
-            label: "Insert extra element at random location",
-            shortLabel: "InsertRandom",
-            args: {},
-            apply: (state) => {
-                const distinctSounds = Array.from(new Set(state.pattern));
-                const randomIndex = Math.floor(Math.random() * (state.pattern.length + 1));
-                const randomSound = distinctSounds[Math.floor(Math.random() * distinctSounds.length)];
-                state.pattern.splice(randomIndex, 0, randomSound);
                 return state;
             }
         },
