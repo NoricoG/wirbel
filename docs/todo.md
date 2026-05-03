@@ -17,6 +17,7 @@ Support with Hydra
 
 
 ### Could
+Try SvelteKit
 Distinct sections
 Mutate automatically for an evolving song or evolving sections
 Support different ways to organise strudel code
