@@ -1,9 +1,10 @@
 import { defineConfig } from 'vite'
 
 export default defineConfig({
-  root: 'src',
-  build: {
-    outDir: '../dist',
-    emptyOutDir: true,
-  },
+    root: 'src',
+    base: '/wirbel/',
+    build: {
+        outDir: '../dist',
+        emptyOutDir: true,
+    },
 })

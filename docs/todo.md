@@ -1,7 +1,8 @@
 ## Future plans
 
 ### Must
-Try Svelte for frontend
+Fix history
+
 Refactor to func
     Decide wat to represent in Wirbel and what to keep in Strudel only
     Add other layer types besides drum.bank (bank:drum, bank:drum:index, chord progression, arpeggio, melody, ...)
@@ -17,7 +18,7 @@ Support with Hydra
 
 
 ### Could
-Try SvelteKit
+Try Svelte or SvelteKit
 Distinct sections
 Mutate automatically for an evolving song or evolving sections
 Support different ways to organise strudel code

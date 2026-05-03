@@ -1,3 +1,4 @@
 .vscode/
 ignore/
 node_modules/
+dist/
