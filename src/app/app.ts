@@ -26,7 +26,7 @@ function patternGenerate() {
     song = new Song();
     song.version = newVersion;
 
-    song.layers[0].generate();
+    song.generate();
 
     renderPattern(song);
 }

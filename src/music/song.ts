@@ -15,6 +15,10 @@ export class Song {
         this.layers = [
             new DrumLayer([this.defaultCycleDivision])
         ]
+        if (Math.random() < 0.5) {
+            this.layers.push(new DrumLayer([this.defaultCycleDivision]));
+            this.layers[1].name = "drum2";
+        }
     }
 
     toCode(): string {
@@ -28,6 +32,12 @@ export class Song {
         }
 
         return song;
+    }
+
+    generate() {
+        for (const layer of this.layers) {
+            layer.generate();
+        }
     }
 
     copy(incrementVersion: boolean): Song {

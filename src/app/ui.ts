@@ -108,21 +108,21 @@ export function initUI(callbacks: {
 }
 
 export function showMutationButtons(onMutation: (category: string, i: number) => void) {
-    document.getElementById('mutations')!.style.display = 'block';
+    // document.getElementById('mutations')!.style.display = 'block';
 
-    const container = document.getElementById('mutationButtons')!;
-    container.innerHTML = '';
-    for (const [category, categoryMutations] of Object.entries(mutations)) {
-        const categoryHeader = document.createElement('h3');
-        categoryHeader.textContent = category;
-        container.appendChild(categoryHeader);
-        categoryMutations.forEach((mutation, i) => {
-            const btn = document.createElement('button');
-            btn.textContent = mutation.label;
-            btn.onclick = () => onMutation(category, i);
-            container.appendChild(btn);
-        });
-    }
+    // const container = document.getElementById('mutationButtons')!;
+    // container.innerHTML = '';
+    // for (const [category, categoryMutations] of Object.entries(mutations)) {
+    //     const categoryHeader = document.createElement('h3');
+    //     categoryHeader.textContent = category;
+    //     container.appendChild(categoryHeader);
+    //     categoryMutations.forEach((mutation, i) => {
+    //         const btn = document.createElement('button');
+    //         btn.textContent = mutation.label;
+    //         btn.onclick = () => onMutation(category, i);
+    //         container.appendChild(btn);
+    //     });
+    // }
 }
 
 export function renderPattern(song: Song) {

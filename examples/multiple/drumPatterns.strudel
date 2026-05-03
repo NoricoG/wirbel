@@ -12,4 +12,6 @@ arrange(
     //   .bank(`<RolandMT32 EmuDrumulator>`)],
     // s(`<[perc - sd sd] [cp ht - - ]>`)
     //     .bank('CompuRhythm8000')
+    // stack(s("<[bd bd] [sh perc perc perc]>").bank("<YamahaRM50@2 RolandD70@2>"),
+    //     s("<[tr909_mt:8 tr727_perc:4 tr909_mt:8] [tr727_perc:4 hr16_hh:0]>"))
 )
