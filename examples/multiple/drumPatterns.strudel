@@ -10,4 +10,6 @@ arrange(
     //   .bank('YamahaRY30')],
     // [cycles, s(`<[oh cr oh cr  cr oh oh cr ]@2>`)
     //   .bank(`<RolandMT32 EmuDrumulator>`)],
+    // s(`<[perc - sd sd] [cp ht - - ]>`)
+    //     .bank('CompuRhythm8000')
 )
