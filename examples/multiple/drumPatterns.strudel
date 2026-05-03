@@ -1,0 +1,13 @@
+const cycles = 8
+
+arrange(
+    // [cycles, s(`<[sd bd bd rim]>`)],
+    // [cycles, s(`<[oh oh oh mt  rd rd rd mt]@2>`)],
+    // [cycles, s(`<[hh sd sd hh sd]>`)],
+    // [cycles, s(`<[sd hh rim hh rim bd hh ]@1.75>`)],
+    // [cycles, s(`<[hh oh oh hh  rim oh oh rim ]@2>`)],
+    // [cycles, s(`<[cb oh cb rim sd rim  oh cb cb rim sd rim ]@3>`)
+    //   .bank('YamahaRY30')],
+    // [cycles, s(`<[oh cr oh cr  cr oh oh cr ]@2>`)
+    //   .bank(`<RolandMT32 EmuDrumulator>`)],
+)

@@ -1,0 +1,72 @@
+// settings for generator and strudel
+let bpm = 60
+let notesPerCycle = 4
+let cyclesPerSection = notesPerCycle * 8 * 8
+
+// settings for generator only
+
+
+// settings for strudel only
+setcpm(bpm * notesPerCycle / 4)
+let punchcardSettings = {}
+
+
+// part A: patterns
+let aDrumPattern = sound("<[hh hh hh hh] [oh hh hh hh]>")
+    ._punchcard()
+let aDrum = aDrumPattern.gain("[0.8 0.5 0.6 0.4]")
+    .gain(slider(0.488))._spectrum()
+let aBassPattern = note("<c2 eb2 g2 eb2>")
+    ._punchcard()
+let aBass = aBassPattern
+    .s("sawtooth")
+    .cutoff(400)
+    .resonance(8)
+    .gain(slider(1))._spectrum()
+
+let aPadPattern = note("<[c3,eb3,g3,bb3] [eb3,g3,bb3,d4] [g3,bb3,d4,f4] [eb3,g3,bb3,d4]>")
+    ._punchcard()
+let aPad = aPadPattern
+    .s("sine")
+    .attack(0.5)
+    .release(1.5)
+    .gain(slider(0.624))._spectrum()
+let aArpPattern = note("<[c4,eb4,g4] [eb4,g4,c5] [g4,c5,eb5] [eb4,g4,c5]>")
+    .arp("0 2 1 2 0 2 1 2")
+    ._punchcard()
+let aArp = aArpPattern.s("triangle")
+    .gain(slider(0))._spectrum()
+
+let aLeadPattern = n("0 1 2 3")
+    .chord("<Cm7 EbM7 Gm7 EbM7>")
+    .mode("above:c4")
+    .voicing()
+    .clip(2)
+    ._punchcard()
+let aLead = aLeadPattern
+    .s("gm_electric_guitar_clean")
+    .delay(0.3)
+    .delaytime(0.125)
+    .delayfeedback(0.4)
+    .gain(slider(1))._spectrum()
+
+
+// section A: stack
+
+let aSection = stack(
+    aDrum,
+    aBass,
+    aArp,
+    aPad,
+    aLead,
+)//._scope()
+
+// section B
+// TODO
+
+// combine parts
+
+arrange(
+    [cyclesPerSection, aSection],
+    // [cyclesPerSection, bSection],
+)

@@ -1,99 +1,20 @@
-var soundOptions = ["-", "bd", "cb", "cp", "cr", "hh", "ht", "lt", "mt", "oh", "perc", "rd", "rim", "sd", "sh", "tb"];
-var soundIgnored = ["misc"]
-// to make sure we have enough to choose from, also in mutations
-while (soundOptions.length < 10) {
-    soundOptions = soundOptions.concat(soundOptions);
-}
+import { Song } from "./music/song";
+import { DrumLayer, mutations } from "./music/layers/drumLayer";
 
-// banks that have at most 4 missing drum sounds
-var bankOptions = [
-    "", // Strudel default, twice for higher chance
-    "", // Strudel default, twice for higher chance
-    "AkaiLinn",
-    "AkaiMPC60", // 1988
-    "AkaiXR10",
-    "AlesisSR16", // 1990
-    "BossDR550", // 1989
-    "CircuitsDrumTracks", // 1984
-    "CompuRhythm1000", // 1986, CR-1000
-    "CompuRhythm8000", // 1981, CR-8000
-    "EmuDrumulator", // 1983
-    "EmuSP12",
-    "KorgM1", // 1988
-    "Linn9000", // 1984
-    "Linndrum", // 1982
-    "LinnLM1", // 1980
-    "LinnLM2",
-    "OberheimDMX", // 1980
-    "RolandD110",
-    "RolandD70",
-    "RolandJD990",
-    "RolandMC303",
-    "RolandMT32", // 1987
-    "RolandR8", // 1989
-    "RolandS50", // 1986
-    "RolandTR505", // 1986
-    "RolandTR626",
-    "RolandTR707", // 1985
-    "RolandTR808", // 1980
-    "SakataDPM48", // 1984
-    "YamahaRM50", // 1992
-    "YamahaRY30", // 1991
-    "YamahaTG33", // 1990
-]
-
-class State {
-    version: number = 0;
-    speed: number;
-    chosenSounds: string[];
-    pattern: string[];
-    bank: string;
-
-    constructor() {
-        this.speed = 120;
-        this.chosenSounds = [];
-        this.pattern = [];
-        this.bank = "";
-    }
-
-    toCode() {
-        const patternLength = this.pattern.length;
-        var patternString = "";
-        for (let i = 0; i < patternLength; i++) {
-            patternString += this.pattern[i] + " ";
-            const addExtraSpace = i + 1 == patternLength / 2;
-            if (addExtraSpace) {
-                patternString += " ";
-            }
-        }
-
-        var fullCode = "setcpm(120)\n" + "s(`<[" + patternString + "]@" + (patternLength / 2) + ">`)\n.bank('" + this.bank + "')";
-        return fullCode;
-    }
-
-    copy() {
-        const newState = new State();
-        newState.version = this.version;
-        newState.speed = this.speed;
-        newState.chosenSounds = this.chosenSounds.slice();
-        newState.pattern = this.pattern.slice();
-        newState.bank = this.bank;
-        return newState;
-    }
-}
-
-var state = new State();
-var previousStates = [] as State[];
-const maxPreviousStates = 10;
+var song = new Song();
+var previousSongs = [] as Song[];
+const maxPreviousSongs = 10;
 
 var repls = [] as any[];
 var playingRepl = -1;
+
+type ReplElement = HTMLElement & { editor?: any };
 
 type Mutation = {
     label: string,
     shortLabel: string,
     args: {},
-    apply: (state: State) => State
+    apply: (song: Song) => Song
 }
 
 function showMutationButtons() {
@@ -115,12 +36,41 @@ function showMutationButtons() {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
+    const getReplElement = (id: string): ReplElement => {
+        return document.getElementById(id) as ReplElement;
+    };
+
     repls = [
-        document.getElementById('currentState'),
-        document.getElementById('stateMinusOne'),
-        document.getElementById('stateMinusTwo'),
-        document.getElementById('stateMinusThree'),
-    ]
+        getReplElement('currentSong'),
+        getReplElement('songMinusOne'),
+        getReplElement('songMinusTwo'),
+        getReplElement('songMinusThree'),
+    ];
+
+    document.getElementById('generate-button')?.addEventListener('click', () => {
+        patternGenerate();
+    });
+
+    document.querySelectorAll('[data-action="replStart"]').forEach((element) => {
+        element.addEventListener('click', () => {
+            const index = parseInt((element as HTMLElement).dataset.index || '-1');
+            replStart(index);
+        });
+    });
+
+    document.querySelectorAll('[data-action="replStop"]').forEach((element) => {
+        element.addEventListener('click', () => {
+            const index = parseInt((element as HTMLElement).dataset.index || '-1');
+            replStop(index);
+        });
+    });
+
+    document.querySelectorAll('[data-action="restorePreviousSong"]').forEach((element) => {
+        element.addEventListener('click', () => {
+            const index = parseInt((element as HTMLElement).dataset.index || '1');
+            restorePreviousSong(index);
+        });
+    });
 });
 
 async function replStopAll() {
@@ -149,81 +99,55 @@ function replStart(index: number) {
 }
 
 function renderPattern(index: number) {
-    const fullCode = state.toCode();
+    const fullCode = song.toCode();
     replLoad(index, fullCode);
     replStart(index);
 
     const chosenSoundsElement = document.getElementById('chosenSounds');
-    chosenSoundsElement.innerText = "Chosen sounds: " + state.chosenSounds.join(", ");
+    chosenSoundsElement.innerText = "Chosen sounds: " + (song.layers[0] as DrumLayer).chosenSounds.join(", ");
 
     const versionElement = document.getElementById('currentVersion');
-    versionElement.innerText = "Current pattern (#" + state.version + ")";
+    versionElement.innerText = "Current pattern (#" + song.version + ")";
 }
 
 function patternGenerate() {
-    if (state.version == 0) {
+    if (song.version == 0) {
         showMutationButtons();
     }
 
-    const newVersion = state.version + 1;
-    makeSpaceForNextState();
-    state.version = newVersion;
+    const newVersion = song.version + 1;
+    song = new Song();
+    song.version = newVersion;
 
-    const numchosenSoundsLower = parseInt((document.getElementById('numberOfSoundsLower') as HTMLInputElement).value);
-    const numchosenSoundsUpper = parseInt((document.getElementById('numberOfSoundsUpper') as HTMLInputElement).value);
-    const numchosenSounds = numchosenSoundsLower + Math.floor(Math.random() * (numchosenSoundsUpper - numchosenSoundsLower + 1));
+    makeSpaceForNextSong();
 
-    state.chosenSounds = [];
-    // can include repetition, on purpose
-    for (let i = 0; i < numchosenSounds; i++) {
-        state.chosenSounds.push(soundOptions[Math.floor(Math.random() * soundOptions.length)]);
-    }
-
-    state.bank = bankOptions[Math.floor(Math.random() * bankOptions.length)];
-
-    const patternLengthLower = parseInt((document.getElementById('patternLengthLower') as HTMLInputElement).value);
-    const patternLengthUpper = parseInt((document.getElementById('patternLengthUpper') as HTMLInputElement).value);
-    const patternLength = patternLengthLower + Math.floor(Math.random() * (patternLengthUpper - patternLengthLower + 1));
-
-    state.pattern = [];
-    for (let i = 0; i < patternLength; i++) {
-        const newSound = state.chosenSounds[Math.floor(Math.random() * state.chosenSounds.length)];
-        state.pattern.push(newSound);
-    }
-
-    console.log("Generated pattern: " + state.pattern);
-
-    const distinctSounds = Array.from(new Set(state.pattern));
-    if (distinctSounds.length == 1) {
-        console.log("Regenerating pattern because it had only one distinct sound");
-        patternGenerate();
-        return;
-    }
+    song.layers[0].generate();
 
     renderPattern(0);
 }
 
 function applyMutation(category: string, mutationId: number) {
-    makeSpaceForNextState()
+    makeSpaceForNextSong()
 
-    const newVersion = state.version + 1;
+    const newVersion = song.version + 1;
 
     const mutation = mutations[category][mutationId];
-    state = mutation.apply(state);
-    state.version = newVersion;
+    // TODO: generalise mutations
+    song.layers[0] = mutation.apply(song.layers[0]);
+    song.version = newVersion;
 
     renderPattern(0);
 }
 
-function restorePreviousState(iterations: number) {
-    state = previousStates[0].copy();
-    for (let i = 0; i < previousStates.length - 1; i++) {
-        previousStates[i] = previousStates[i + 1];
+function restorePreviousSong(iterations: number) {
+    song = previousSongs[0].copy(false);
+    for (let i = 0; i < previousSongs.length - 1; i++) {
+        previousSongs[i] = previousSongs[i + 1];
     }
-    previousStates.pop();
+    previousSongs.pop();
 
     if (iterations > 1) {
-        return restorePreviousState(iterations - 1);
+        return restorePreviousSong(iterations - 1);
     }
 
     showMutationHistory();
@@ -232,45 +156,45 @@ function restorePreviousState(iterations: number) {
 
 }
 
-function makeSpaceForNextState() {
-    if (previousStates.length < maxPreviousStates) {
-        previousStates.push(new State());
+function makeSpaceForNextSong() {
+    if (previousSongs.length < maxPreviousSongs) {
+        previousSongs.push(new Song());
     }
 
-    for (let i = previousStates.length - 1; i > 0; i--) {
-        previousStates[i] = previousStates[i - 1];
+    for (let i = previousSongs.length - 1; i > 0; i--) {
+        previousSongs[i] = previousSongs[i - 1];
     }
-    previousStates[0] = state.copy();
+    previousSongs[0] = song.copy(false);
 
     showMutationHistory();
 }
 
 function showMutationHistory() {
-    if (previousStates.length > 0 && previousStates[0].version > 0) {
+    if (previousSongs.length > 0 && previousSongs[0].version > 0) {
         document.getElementById("patternMinusOne").style.display = "block";
-        (document.getElementById('stateMinusOne') as any).editor.setCode(previousStates[0].toCode());
-        document.getElementById('versionMinusOne').innerText = "Previous pattern (#" + previousStates[0].version + ")";
+        (repls[1] as any).editor.setCode(previousSongs[0].toCode());
+        document.getElementById('versionMinusOne').innerText = "Previous pattern (#" + previousSongs[0].version + ")";
     } else {
         document.getElementById("patternMinusOne").style.display = "none";
-        (document.getElementById('stateMinusOne') as any).editor.setCode("// No previous state");
+        (repls[1] as any).editor.setCode("// No previous song");
     }
 
-    if (previousStates.length > 1 && previousStates[1].version > 0) {
+    if (previousSongs.length > 1 && previousSongs[1].version > 0) {
         document.getElementById("patternMinusTwo").style.display = "block";
-        (document.getElementById('stateMinusTwo') as any).editor.setCode(previousStates[1].toCode());
-        document.getElementById('versionMinusTwo').innerText = "Previous pattern (#" + previousStates[1].version + ")";
+        (repls[2] as any).editor.setCode(previousSongs[1].toCode());
+        document.getElementById('versionMinusTwo').innerText = "Previous pattern (#" + previousSongs[1].version + ")";
     } else {
         document.getElementById("patternMinusTwo").style.display = "none";
-        (document.getElementById('stateMinusTwo') as any).editor.setCode("// No previous state");
+        (repls[2] as any).editor.setCode("// No previous song");
 
     }
 
-    if (previousStates.length > 2 && previousStates[2].version > 0) {
+    if (previousSongs.length > 2 && previousSongs[2].version > 0) {
         document.getElementById("patternMinusThree").style.display = "block";
-        (document.getElementById('stateMinusThree') as any).editor.setCode(previousStates[2].toCode());
-        document.getElementById('versionMinusThree').innerText = "Previous pattern (#" + previousStates[2].version + ")";
+        (repls[3] as any).editor.setCode(previousSongs[2].toCode());
+        document.getElementById('versionMinusThree').innerText = "Previous pattern (#" + previousSongs[2].version + ")";
     } else {
         document.getElementById("patternMinusThree").style.display = "none";
-        (document.getElementById('stateMinusThree') as any).editor.setCode("// No previous state");
+        (repls[3] as any).editor.setCode("// No previous song");
     }
 }

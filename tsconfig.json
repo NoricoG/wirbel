@@ -5,8 +5,11 @@
             "es2023",
             "dom"
         ],
-        "module": "system",
-        "moduleResolution": "node",
-        "outFile": "compiled/script.js"
-    }
+        "module": "esnext",
+        "moduleResolution": "bundler",
+        "isolatedModules": true,
+        "noEmit": true,
+        "strict": false // TODO: fix errors and set to true
+    },
+    "include": ["src"]
 }
