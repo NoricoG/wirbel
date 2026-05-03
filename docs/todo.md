@@ -1,13 +1,20 @@
 ## Future plans
 
 ### Must
-Fix history
 
-Refactor to func
-    Decide wat to represent in Wirbel and what to keep in Strudel only
-    Add other layer types besides drum.bank (bank:drum, bank:drum:index, chord progression, arpeggio, melody, ...)
-    Generalise mutations and mutation history
-    Generalise UI
+Improve cycleDivision
+Add other layer types besides drum.bank (bank:drum, bank:drum:index, chord progression, arpeggio, melody, ...)
+
+Divid random generation
+    Random song properties (reset independently)
+    Random song layers (reset independently)
+    Per layer
+        Random layer variations (reset independently or reset all layer variations)
+    And button to reset all (Random song)
+
+Generalise mutations and mutation history
+Generalise mutation UI
+
 
 ### Should
 Easy way to listen to all options in sequence
@@ -18,6 +25,7 @@ Support with Hydra
 
 
 ### Could
+More wrappers
 Try Svelte or SvelteKit
 Distinct sections
 Mutate automatically for an evolving song or evolving sections

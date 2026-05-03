@@ -1,6 +1,6 @@
-import { Song } from "./music/song";
-import { mutations } from "./music/layers/drumLayer";
-import { initUI, showMutationButtons, showMutationHistory, renderPattern } from "./ui/ui";
+import { Song } from "../music/song";
+import { mutations } from "../music/layers/drumLayer";
+import { initUI, showMutationButtons, showMutationHistory, renderPattern } from "./ui";
 
 var song = new Song();
 var previousSongs = [] as Song[];
@@ -17,7 +17,7 @@ function patternGenerate() {
     const firstSong = song.version === 0;
 
     if (firstSong) {
-        showMutationButtons(applyMutation);
+        // showMutationButtons(applyMutation);
     } else {
         makeSpaceForNextSong();
     }

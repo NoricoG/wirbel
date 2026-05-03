@@ -1,10 +1,12 @@
 import { Layer } from "./layers/layer";
 import { DrumLayer } from "./layers/drumLayer";
+import { deepCopy } from "./helpers";
 
 export class Song {
     version: number = 0;
 
     bpm = 60;
+    // TODO: connect this with actual cycle division
     defaultCycleDivision = 4;
 
     layers: Layer[];
@@ -29,16 +31,13 @@ export class Song {
     }
 
     copy(incrementVersion: boolean): Song {
-        const newSong = new Song();
-        newSong.version = incrementVersion ? this.version + 1 : this.version;
-        newSong.bpm = this.bpm;
-        newSong.defaultCycleDivision = this.defaultCycleDivision;
-        newSong.layers = this.layers.map(layer => layer.copy());
+        const newSong = deepCopy(this);
+        if (incrementVersion) newSong.version++;
         return newSong;
     }
 
     undo(): Song {
-        // TODO: move undo functionality hewre
+        // TODO: move undo functionality here
         return this;
     }
 

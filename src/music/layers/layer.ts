@@ -1,15 +1,19 @@
+import { Func } from "../func/base/func";
+
 export abstract class Layer {
     name: string;
 
-    cycleDivison: number[];
+    cycleDivision: number[];
 
-    constructor(name: string, cycleDivison: number[]) {
+    funcs: Func[];
+
+    constructor(name: string, cycleDivision: number[], funcs: Func[]) {
         this.name = name;
 
-        this.cycleDivison = cycleDivison;
-    }
+        this.cycleDivision = cycleDivision;
 
-    abstract copy(): Layer;
+        this.funcs = funcs;
+    }
 
     abstract generate(): void;
 

@@ -130,8 +130,6 @@ export function renderPattern(song: Song) {
     replLoad(0, fullCode);
     replStart(0);
 
-    document.getElementById('chosenSounds')!.innerText =
-        "Chosen sounds: " + (song.layers[0] as DrumLayer).chosenSounds.join(", ");
     document.getElementById('currentVersion')!.innerText =
         "Current pattern (#" + song.version + ")";
 }
